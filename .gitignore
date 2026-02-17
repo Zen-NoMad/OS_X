@@ -1,2 +1,4 @@
 build
 iso
+*.iso
+*.md
