@@ -1,4 +1,4 @@
-#include <common/types.h>
+#include <libs/types.h>
 
 #define VGA_ADDR 0xB8000
 #define VGA_WIDTH 80
@@ -33,7 +33,8 @@ private:
 
 public:
     VGA() {}
-    static void putChar(char C, uint8_t text_color = (uint8_t)white, uint8_t background_color = (uint8_t)black);
-    static void print(const char *str, uint8_t text_color = (uint8_t)white, uint8_t background_color = (uint8_t)black);
+    static void putChar(char C, uint8_t text_color, uint8_t background_color);
+    static void print(const char *str, uint8_t text_color = white, uint8_t background_color = black);
+    static void newLine();
     static void clearScreen();
 };

@@ -9,3 +9,8 @@ typedef signed int int32_t;
 typedef signed long long int64_t;
 
 typedef uint64_t size_t;
+typedef uint64_t uintptr_t;
+
+typedef void *nullptr_t;
+#define nullptr ((void *)0)
+#define NULL ((void *)0)

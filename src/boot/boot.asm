@@ -6,6 +6,21 @@ header_start:
     dd 0                        ; Architecture
     dd header_end - header_start ; Header length
     dd -(0xE85250D6 + 0 + (header_end - header_start))
+
+; Basic Memory Info
+align 8
+    dw 4
+    dw 0
+    dd 8
+
+; Memory Map
+align 8
+    dw 6
+    dw 0
+    dd 8
+
+; End tag
+align 8
     dw 0
     dw 0
     dd 8
@@ -17,10 +32,14 @@ pdpt:   resb 4096
 pd:     resb 4096 * 512         ; 512 entries → 512 * 2 MiB = 1 GiB identity mapping
 
 stack_bottom:
-        resb 32768              ; 32 KiB stack (safer than 16 KiB)
+        resb 32768              ; 32 KiB stack
 stack_top:
 
 section .data align=8
+; Save multiboot2 data
+saved_mbinfo: dd 0
+saved_magic:  dd 0
+
 gdt64:
         dq 0                    ; null descriptor
 
@@ -56,9 +75,8 @@ _start_32:
     cmp eax, 0x36d76289
     jne .error
 
-    ; Save multiboot2 info pointer (ebx = physical address of multiboot2 structure)
-    mov edi, ebx        ; edi = multiboot2 info ptr
-    mov esi, eax        ; esi = magic
+    mov [saved_mbinfo], ebx
+    mov [saved_magic], eax
 
     ; Check if long mode is supported
     mov eax, 0x80000000
@@ -69,19 +87,19 @@ _start_32:
     ; Setup simple identity mapping: 1 GiB (512 x 2 MiB pages)
     mov eax, pdpt
     or  eax, 3                  ; present + writable
-    mov [pml4], eax             ; PML4[0] -> PDPT (covers 0..512 GiB virtual)
+    mov [pml4], eax             ; PML4[0] -> PDPT
 
     mov eax, pd
     or  eax, 3
-    mov [pdpt], eax             ; PDPT[0] -> PD (covers 0..1 GiB virtual)
+    mov [pdpt], eax             ; PDPT[0] -> PD
 
     ; Fill PD with 512 entries: 2 MiB huge pages, identity mapped
     mov ecx, 512
     mov ebx, 0x00000083         ; 2 MiB page + present + writable
-    mov edi, pd
+    mov eax, pd                 ; PD'nin başlangıç adresini EAX'e al
 .fill_pd:
-    mov [edi], ebx
-    add edi, 8
+    mov [eax], ebx              ; [eax]'e yaz (edi kullanma!)
+    add eax, 8
     add ebx, 0x00200000         ; next 2 MiB block
     loop .fill_pd
 
@@ -130,9 +148,12 @@ _start_32:
     ; Setup stack in 64-bit mode
     mov rsp, stack_top
 
-    ; Pass multiboot2 info to kernel_main (rdi = 1st arg in System V ABI)
-    mov rdi, rdi    ; 1st arg = multiboot2 info ptr
-    mov rsi, rsi    ; 2nd arg = magic
+    ; Load saved Multiboot2 data
+    mov rdi, [saved_mbinfo]     ; Orijinal adres (0x40000083)
+    mov rsi, [saved_magic]      ; Magic number
+    
+    ; Align 8
+    and rdi, ~0x7               ; 0x40000083 → 0x40000080
 
     call kernel_main
 

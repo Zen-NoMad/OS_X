@@ -26,6 +26,8 @@
 #define MULTIBOOT_SEARCH 32768
 #define MULTIBOOT_HEADER_ALIGN 8
 
+#include <libs/types.h>
+
 /*  The magic field should contain this. */
 #define MULTIBOOT2_HEADER_MAGIC 0xe85250d6
 
@@ -410,6 +412,20 @@ struct multiboot_tag_load_base_addr
     multiboot_uint32_t type;
     multiboot_uint32_t size;
     multiboot_uint32_t load_base_addr;
+};
+
+class Multiboot2
+{
+private:
+    static multiboot_tag_basic_meminfo *memInfo;
+    static multiboot_tag_mmap *mmapInfo;
+
+public:
+    Multiboot2();
+    static void checkMagic(uint64_t magic);
+    static void parseMBTag(uintptr_t MB_header_tag);
+    static void setMemInfo(multiboot_tag_basic_meminfo *memInfo);
+    static void setMmapInfo(multiboot_tag_mmap *mmapInfo);
 };
 
 #endif /*  ! ASM_FILE */

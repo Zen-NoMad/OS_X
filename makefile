@@ -18,7 +18,7 @@ CXXFLAGS       := -ffreestanding -m64 -mcmodel=kernel -mno-red-zone -mno-mmx -mn
 LDFLAGS = -T src/linker.ld -nostdlib -static --no-dynamic-linker -z max-page-size=0x1000
 
 QEMU_FLAGS     := -serial stdio \
-                  -m 512M \
+                  -m 1024M \
                   -no-reboot \
                   -machine q35 \
                   -cpu qemu64 \
